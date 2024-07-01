@@ -14,8 +14,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane/upjet/pkg/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/believe/provider-cloudflare/apis/v1beta1"
+	"github.com/ecoupal-believe/provider-cloudflare/apis/v1beta1"
 )
 
 const (
@@ -25,20 +26,21 @@ const (
 	errTrackUsage           = "cannot track ProviderConfig usage"
 	errExtractCredentials   = "cannot extract credentials"
 	errUnmarshalCredentials = "cannot unmarshal cloudflare credentials as JSON"
+
+	apiBasePath       = "api_base_path"
+	apiClientLogging  = "api_client_logging"
+	apiHostname       = "api_hostname"
+	apiKey            = "api_key"
+	apiToken          = "api_token"
+	apiUserServiceKey = "api_user_service_key"
+	email             = "email"
 )
 
 // TerraformSetupBuilder builds Terraform a terraform.SetupFn function which
 // returns Terraform provider setup configuration
-func TerraformSetupBuilder(version, providerSource, providerVersion string) terraform.SetupFn {
+func TerraformSetupBuilder(tfProvider *schema.Provider) terraform.SetupFn {
 	return func(ctx context.Context, client client.Client, mg resource.Managed) (terraform.Setup, error) {
-		ps := terraform.Setup{
-			Version: version,
-			Requirement: terraform.ProviderRequirement{
-				Source:  providerSource,
-				Version: providerVersion,
-			},
-		}
-
+		ps := terraform.Setup{}
 		configRef := mg.GetProviderConfigReference()
 		if configRef == nil {
 			return ps, errors.New(errNoProviderConfig)
@@ -62,11 +64,28 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 			return ps, errors.Wrap(err, errUnmarshalCredentials)
 		}
 
-		// Set credentials in Terraform provider configuration.
-		/*ps.Configuration = map[string]any{
-			"username": creds["username"],
-			"password": creds["password"],
-		}*/
+		ps.Configuration = map[string]any{}
+		if v, ok := creds[apiBasePath]; ok {
+			ps.Configuration[apiBasePath] = v
+		}
+		if v, ok := creds[apiClientLogging]; ok {
+			ps.Configuration[apiClientLogging] = v
+		}
+		if v, ok := creds[apiHostname]; ok {
+			ps.Configuration[apiHostname] = v
+		}
+		if v, ok := creds[apiKey]; ok {
+			ps.Configuration[apiKey] = v
+		}
+		if v, ok := creds[apiToken]; ok {
+			ps.Configuration[apiToken] = v
+		}
+		if v, ok := creds[apiUserServiceKey]; ok {
+			ps.Configuration[apiUserServiceKey] = v
+		}
+		if v, ok := creds[email]; ok {
+			ps.Configuration[email] = v
+		}
 		return ps, nil
 	}
 }

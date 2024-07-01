@@ -2,8 +2,6 @@ module github.com/believe/provider-cloudflare
 
 go 1.21
 
-toolchain go1.22.4
-
 require (
 	github.com/crossplane/crossplane-runtime v1.16.0
 	github.com/crossplane/crossplane-tools v0.0.0-20240522174801-1ad3d4c87f21
